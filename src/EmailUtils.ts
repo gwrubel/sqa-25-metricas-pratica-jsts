@@ -1,53 +1,61 @@
 export class EmailUtils {
-  public static validateEmail(email: any): boolean {
-    // TODO: remover console.log depois
-    console.log("Validando email:", email);
 
-    const x = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
-    if (!x.test(email)) {
-      console.log("Regex falhou");
+  public static validateEmail(email: string): boolean {
+    if (!this.emailRegex(email)) {
       return false;
     }
 
-    const parts = email.split("@");
-    const x1 = parts[0];
-    const x2 = parts[1];
-    console.log("Parte local:", x1, "Domínio:", x2);
+    const [localPart, domain] = email.split("@");
 
-    if (x1.length > 64) {
+    return (
+      this.validateLocalPart(localPart) &&
+      this.validateDomain(domain)
+    );
+  }
+
+  private static emailRegex(email: string): boolean {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  }
+
+  private static validateLocalPart(local: string): boolean {
+    const LOCAL_PART_MAX_LENGTH = 64;
+
+    if (local.length > LOCAL_PART_MAX_LENGTH) {
+      return false;
+    }
+    if (local.startsWith(".") || local.endsWith(".")) {
       return false;
     }
 
-    if (x2.length > 253) {
+    if (local.includes("..")) {
       return false;
     }
 
-    if (x1.startsWith(".") || x1.endsWith(".")) {
-      return false;
-    }
-
-    if (x1.includes("..")) {
-      return false;
-    }
-
-    if (!x2.includes(".")) {
-      return false;
-    }
-
-    if (x2.startsWith(".") || x2.endsWith(".")) {
-      return false;
-    }
-
-    if (x2.includes("..")) {
-      return false;
-    }
-
-    console.log("Email válido");
     return true;
   }
 
-  public static extractDomain(email: any): string | null {
+  private static validateDomain(domain: string): boolean {
+    const DOMAIN_MAX_LENGTH = 253;
+
+    if (domain.length > DOMAIN_MAX_LENGTH) {
+      return false;
+    }
+    if (!domain.includes(".")) {
+      return false;
+    }
+    if (domain.startsWith(".") || domain.endsWith(".")) {
+      return false;
+    }
+    if (domain.includes("..")){
+      return false;
+    }
+    return true;
+  }
+
+
+
+  public static extractDomain(email: string): string | null {
     if (!this.validateEmail(email)) {
       return null;
     }
@@ -56,7 +64,7 @@ export class EmailUtils {
     return x[1] || null;
   }
 
-  public static extractLocalPart(email: any): string | null {
+  public static extractLocalPart(email: string): string | null {
     if (!this.validateEmail(email)) {
       return null;
     }
@@ -65,38 +73,45 @@ export class EmailUtils {
     return x[0] || null;
   }
 
-  public static isFromDomain(email: any, domain: any): boolean {
-    if (!this.validateEmail(email) || !domain) {
-      return false;
-    }
-
-    const x = this.extractDomain(email);
-    if (!x) {
-      return false;
-    }
-
-    if (x.toLowerCase() === domain.toLowerCase()) {
-      return true;
-    }
-
-    if (x.toLowerCase().endsWith("." + domain.toLowerCase())) {
-      return true;
-    }
-
-    const x1 = x.toLowerCase().split(".");
-    const x2 = domain.toLowerCase().split(".");
-
-    if (x1.length >= x2.length) {
-      const temp = x1.slice(-x2.length);
-      if (temp.join(".") === x2.join(".")) {
-        return true;
-      }
-    }
-
+public static isFromDomain(email: string, domain: string): boolean {
+  if (!this.validateEmail(email) || !domain) {
     return false;
   }
 
-  public static normalizeEmail(email: any): string {
+  const extractedDomain = this.extractDomain(email);
+  if (!extractedDomain) {
+    return false;
+  }
+
+  return this.matchDomain(extractedDomain, domain);
+}
+
+private static matchDomain(emailDomain: string, targetDomain: string): boolean {
+  const emailDomainLower = emailDomain.toLowerCase();
+  const targetDomainLower = targetDomain.toLowerCase();
+
+
+  if (emailDomainLower === targetDomainLower) {
+    return true;
+  }
+
+  if (emailDomainLower.endsWith("." + targetDomainLower)) {
+    return true;
+  }
+
+  const emailParts = emailDomainLower.split(".");
+  const targetParts = targetDomainLower.split(".");
+
+  if (emailParts.length >= targetParts.length) {
+    const slice = emailParts.slice(-targetParts.length);
+    return slice.join(".") === targetParts.join(".");
+  }
+
+  return false;
+}
+
+
+  public static normalizeEmail(email: string): string {
     return email.trim().toLowerCase();
   }
 }

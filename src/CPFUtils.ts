@@ -1,12 +1,8 @@
 export class CPFUtils {
-  public static validateCPF(cpf: any): boolean {
-    // TODO: remover console.log depois
-    console.log("Validando CPF:", cpf);
-
+  public static validateCPF(cpf: string): boolean {
     const x = cpf.replace(/\D/g, "");
-    console.log("CPF limpo:", x);
 
-    if (x.length !== 11) {
+    if (!this.tamanhoValido(x)) {
       return false;
     }
 
@@ -14,32 +10,38 @@ export class CPFUtils {
       return false;
     }
 
-    let temp = 0;
-    for (let i = 0; i < 9; i++) {
-      temp += parseInt(x.charAt(i)) * (10 - i);
-    }
-    let remainder = temp % 11;
-    let firstDigit = remainder < 2 ? 0 : 11 - remainder;
-    console.log("Primeiro dígito CPF:", firstDigit);
+    const PESO_PRIMEIRO_DIGITO = 10;
+    const PESO_SEGUNDO_DIGITO = 11;
 
-    temp = 0;
-    for (let i = 0; i < 10; i++) {
-      temp += parseInt(x.charAt(i)) * (11 - i);
-    }
-    remainder = temp % 11;
-    let secondDigit = remainder < 2 ? 0 : 11 - remainder;
-    console.log("Segundo dígito CPF:", secondDigit);
+    const primeiroDigito = this.calcularDigito(x.substring(0, 9), PESO_PRIMEIRO_DIGITO);
+    const segundoDigito = this.calcularDigito(x.substring(0, 10), PESO_SEGUNDO_DIGITO);
 
     return (
-      parseInt(x.charAt(9)) === firstDigit &&
-      parseInt(x.charAt(10)) === secondDigit
+      parseInt(x.charAt(9)) === primeiroDigito &&
+      parseInt(x.charAt(10)) === segundoDigito
     );
   }
 
-  public static maskCPF(cpf: any): string {
+  private static tamanhoValido(cpf: string): boolean {
+    const TAMANHO = 11;
+    return cpf.length === TAMANHO;
+  }
+
+  private static calcularDigito(cpfParcial: string, pesoInicial: number): number {
+    let soma = 0;
+    const DIVISOR = 11;
+    for (let i = 0; i < cpfParcial.length; i++) {
+      soma += parseInt(cpfParcial.charAt(i)) * (pesoInicial - i);
+    }
+
+    const resto = soma % DIVISOR;
+    return resto < 2 ? 0 : DIVISOR - resto;
+  }
+
+  public static maskCPF(cpf: String): string {
     const x = cpf.replace(/\D/g, "");
 
-    if (x.length !== 11) {
+    if (!this.tamanhoValido(x)) {
       throw new Error("CPF deve ter 11 dígitos");
     }
 
@@ -56,49 +58,35 @@ export class CPFUtils {
     return x1;
   }
 
-  public static unmaskCPF(cpf: any): string {
+  public static unmaskCPF(cpf: string): string {
     return cpf.replace(/\D/g, "");
   }
 
   public static generateValidCPF(): string {
-    const generateRandomDigits = (length: any): string => {
+    const gerarDigitosAleatorios = (tamanho: number): string => {
       let x = "";
-      for (let i = 0; i < length; i++) {
+      for (let i = 0; i < tamanho; i++) {
         x += Math.floor(Math.random() * 10).toString();
       }
       return x;
     };
 
-    const calculateVerifierDigit = (
-      partialCPF: any,
-      isFirstDigit: any
-    ): number => {
-      const weights: any = isFirstDigit
-        ? [10, 9, 8, 7, 6, 5, 4, 3, 2]
-        : [11, 10, 9, 8, 7, 6, 5, 4, 3, 2];
-      let temp = 0;
+    let cpfParcial = gerarDigitosAleatorios(9);
 
-      for (let i = 0; i < weights.length; i++) {
-        temp += parseInt(partialCPF.charAt(i)) * weights[i];
-      }
+    const PESO_PRIMEIRO_DIGITO = 10;
+    const PESO_SEGUNDO_DIGITO = 11;
 
-      const remainder = temp % 11;
-      return remainder < 2 ? 0 : 11 - remainder;
-    };
+    const primeiroDigito = this.calcularDigito(cpfParcial, PESO_PRIMEIRO_DIGITO);
+    cpfParcial += primeiroDigito.toString();
 
-    let partialCPF = generateRandomDigits(9);
-    console.log("CPF parcial gerado:", partialCPF);
+    const segundoDigito = this.calcularDigito(cpfParcial, PESO_SEGUNDO_DIGITO);
+    cpfParcial += segundoDigito.toString();
 
-    const firstDigit = calculateVerifierDigit(partialCPF, true);
-    partialCPF += firstDigit.toString();
-
-    const secondDigit = calculateVerifierDigit(partialCPF, false);
-    partialCPF += secondDigit.toString();
-
-    return partialCPF;
+    return cpfParcial;
   }
 
-  public static isValidFormat(cpf: any): boolean {
+
+  public static isValidFormat(cpf: string): boolean {
     const x = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
     if (x.test(cpf)) {
       return true;

@@ -1,12 +1,12 @@
 import { service } from "../service";
 import { EmailUtils } from "../EmailUtils";
 import { CNPJUtils } from "../CNPJUtils";
-import { validatePassword } from "../passwordUtils";
+import { validatePassword } from "../PasswordUtils";
 
 // Mock das dependências
 jest.mock("../EmailUtils");
 jest.mock("../CNPJUtils");
-jest.mock("../passwordUtils");
+jest.mock("../PasswordUtils");
 
 const mockEmailUtils = EmailUtils as jest.Mocked<typeof EmailUtils>;
 const mockCNPJUtils = CNPJUtils as jest.Mocked<typeof CNPJUtils>;
